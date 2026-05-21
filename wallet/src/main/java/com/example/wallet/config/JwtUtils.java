@@ -2,13 +2,14 @@ package com.example.wallet.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import com.example.wallet.model.User;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @Component
 public class JwtUtils {
@@ -33,9 +34,12 @@ public class JwtUtils {
                 .getBody();
     }
 
-    public String generateToken(UserDetails userDetails) {
+    // Generate token using custom User entity
+    public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userDetails.getUsername());
+        claims.put("role", user.getRole());
+        claims.put("upiId", user.getUpiId());
+        return createToken(claims, user.getUsername());
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -48,9 +52,10 @@ public class JwtUtils {
                 .compact();
     }
 
+    // Validate token against Spring Security UserDetails
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {
